@@ -96,7 +96,7 @@ router.get('/forgotPassword/:idusers', async(req,res) =>{
         <p>Se solicito el cambio de su contraseña al sistema de tickets RodelSoft. Recuerda que por seguridad es recomendable que cambies tu contraseña inmediatamente.</p>`;
 
       let info = await transporter.sendMail({
-        from: "'RodelSoft Tickets' <jr.rodriguezd@hotmail.com>",
+        from: "'RodelSoft Tickets' <" + process.env.EMAIL_AUTH_USER + ">",
         to: email,
         subject:'RodelSoft Tickets Recupera tu contraseña',
         html: contentHTML
