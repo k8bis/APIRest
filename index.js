@@ -8,8 +8,6 @@ const indexRoute = require('./src/routes/index');
 const path = require('path');
 
 //settings
-console.log(process.env); // remove this after you've confirmed it working
-
 app.set('port', process.env.port||3001);
 app.set('json spaces',2);
 
