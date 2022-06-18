@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const connection = require('../database/db');
-const nodemailer = require('nodemailer');
 const bcryptjs = require('bcryptjs');
 const transporter = require('../email/index');
 
@@ -10,7 +9,8 @@ const { parse } = require('dotenv');
 router.use(cors());
 
 const  generateRandomString = (num) => {
-  const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  //const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const characters = '0123456789';
   let result1= ' ';
   const charactersLength = characters.length;
   for ( let i = 0; i < num; i++ ) {
@@ -39,6 +39,72 @@ router.get('/ticketsXUsuario/:id', (req, res) => {
 
 });
 
+router.get( '/addUpdateTickets', async( req, res ) => {
+  var {idTicket,ticketDescripcion,idUserAlta,idUserAsignado,ticketCierre} = req.body;
+
+  const query = "CALL ticketsUpdateOrInsert(?,?,?,?,?);";
+
+  connection.query(query,[idTicket,ticketDescripcion,idUserAlta,idUserAsignado,ticketCierre],async(error,results)=>{
+    if(error){
+      res.json({
+                result: error,
+                idticket: -1
+              });
+    }else{
+      const result = results[0];
+
+      var {idticket, fechaAlta, Descripcion, Observaciones, usuarioAlta, emailAlta, usuarioCierre, emailCierre} = result[0];
+
+      var emailTo = emailAlta; 
+
+      if (Observaciones === null){
+        //enviar correo con los comentarios de Alta
+        contentHTML = `
+          <H1> Informacion de Ticket ${idticket}</H1>
+          <p>Le informamos que se dio de alta el siguiente ticket:</p>
+          <ul>
+            <li>No. Ticket: ${idticket} </li>
+            <li>Fecha Alta: ${fechaAlta} </li>
+            <li>Usuario Alta: <a href="mailto:${emailAlta}">${usuarioAlta}</a> </li>
+            <li>Descripcion: ${Descripcion} </li>
+          </ul>
+          <p>Usuario que atiende: <a href="mailto:${emailCierre}">${usuarioCierre}</a></p>`;
+       
+        subject = 'Alta TICKET ' + idticket;
+
+        emailTo += ',' + emailCierre;
+      }else{
+        //enviar correo con los comentarios de cierre
+        contentHTML = `
+          <H1> Informacion de Ticket ${idticket}</H1>
+          <p>Le informamos que su ticket fue atendido de manera satisfactoria.</p>
+          <ul>
+            <li>No. Ticket: ${idticket} </li>
+            <li>Fecha Alta: ${fechaAlta} </li>
+            <li>Descripcion: ${Descripcion} </li>
+          </ul>
+          <p>Observaciones de cierre: ${Observaciones}</p>
+          <p>Usuario que atendio: <a href="mailto:${emailCierre}">${usuarioCierre}</a></p> `;
+        
+        subject = 'Cierre TICKET ' + idticket;
+
+      };
+
+      let info = await transporter.sendMail({
+        from: "'RodelSoft Tickets' <" + process.env.EMAIL_AUTH_USER + ">",
+        to: emailTo,
+        subject: subject,
+        html: contentHTML
+      });
+
+      res.json({
+        result: 'ok',
+        idTicket: 0 //result[0].idtickets
+      }); 
+    }
+  })
+});
+
 router.get('/getCatUsuarios', (req, res) => {
   const query = "CALL getCatUsuarios(?,?);";
 
@@ -65,10 +131,10 @@ router.get('/getCatUsuarios/:id&:email', (req, res) => {
       if(error){
           console.log(error); 
       }else{
-        if (results[0].length == 0){            
-          res.send('no existe')  ; 
+        if (results[0].length == 0){ 
+          res.json({estatus: 'no existe'});
         }else{
-          res.json({users: results[0]})  ;              
+          res.json(results[0])  ;              
         }
       }
   })
@@ -87,7 +153,7 @@ router.get('/forgotPassword/:idusers', async(req,res) =>{
       const objetoRecopilado = results[0];
       const email = objetoRecopilado[0].email;
 
-     contentHTML = `
+      contentHTML = `
         <H1> User Information </H1>
         <ul>
           <li>Email: ${email} </li>
@@ -98,7 +164,7 @@ router.get('/forgotPassword/:idusers', async(req,res) =>{
       let info = await transporter.sendMail({
         from: "'RodelSoft Tickets' <" + process.env.EMAIL_AUTH_USER + ">",
         to: email,
-        subject:'RodelSoft Tickets Recupera tu contraseña',
+        subject:'Recupera tu contraseña',
         html: contentHTML
       });
 
