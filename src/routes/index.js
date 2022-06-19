@@ -41,9 +41,9 @@ router.get('/ticketsXUsuario/:id', (req, res) => {
 
 router.get( '/addUpdateTickets', async( req, res ) => {
   var {idTicket,ticketDescripcion,idUserAlta,idUserAsignado,ticketCierre} = req.query;
-  console.log(req);
+  
   const query = "CALL ticketsUpdateOrInsert(?,?,?,?,?);";
-
+  console.log(ticketDescripcion);
   connection.query(query,[idTicket,ticketDescripcion,idUserAlta,idUserAsignado,ticketCierre],async(error,results)=>{
     if(error){
       res.json({
