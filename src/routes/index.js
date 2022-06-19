@@ -40,7 +40,7 @@ router.get('/ticketsXUsuario/:id', (req, res) => {
 });
 
 router.get( '/addUpdateTickets', async( req, res ) => {
-  var {idTicket,ticketDescripcion,idUserAlta,idUserAsignado,ticketCierre} = req.body;
+  var {idTicket,ticketDescripcion,idUserAlta,idUserAsignado,ticketCierre} = req.query;
 
   const query = "CALL ticketsUpdateOrInsert(?,?,?,?,?);";
 
@@ -89,14 +89,14 @@ router.get( '/addUpdateTickets', async( req, res ) => {
         subject = 'Cierre TICKET ' + idticket;
 
       };
-
+/*
       let info = await transporter.sendMail({
         from: "'RodelSoft Tickets' <" + process.env.EMAIL_AUTH_USER + ">",
         to: emailTo,
         subject: subject,
         html: contentHTML
       });
-
+*/
       res.json({
         result: 'ok',
         idTicket: 0 //result[0].idtickets
