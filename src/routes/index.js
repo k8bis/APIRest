@@ -158,12 +158,12 @@ router.get('/forgotPassword/:idusers', async(req,res) =>{
       const email = objetoRecopilado[0].email;
 
       contentHTML = `
-        <H1> User Information </H1>
+        <H1> Informacion de usuario</H1>
         <ul>
           <li>Email: ${email} </li>
           <li>Contraseña Temporal: ${ newPassword } </li>
         </ul>
-        <p>Se solicito el cambio de su contraseña al sistema de tickets RodelSoft. Recuerda que por seguridad es recomendable que cambies tu contraseña inmediatamente.</p>`;
+        <p>Se solicito el cambio de su contraseña al <a href='${process.env.SERVER_APP}'>Sistema de tickets RodelSoft.</a> Recuerda que por seguridad es recomendable que cambies tu contraseña inmediatamente.</p>`;
 
       let info = await transporter.sendMail({
         from: "'RodelSoft Tickets' <" + process.env.EMAIL_AUTH_USER + ">",
