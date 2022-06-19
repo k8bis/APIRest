@@ -53,7 +53,7 @@ router.get( '/addUpdateTickets', async( req, res ) => {
     }else{
       const result = results[0];
 
-      console.log(result);
+      console.log(results);
 
       var {idticket, fechaAlta, Descripcion, Observaciones, usuarioAlta, emailAlta, usuarioCierre, emailCierre} = result[0];
 
