@@ -4,6 +4,7 @@ const connection = require('../database/db');
 const bcryptjs = require('bcryptjs');
 const transporter = require('../email/index');
 var cors = require ('cors');
+const { rollback } = require('../database/db');
 router.use(cors());
 
 const  generateRandomString = (num) => {
@@ -33,6 +34,54 @@ router.get('/ticketsXUsuario/:id', (req, res) => {
           res.json(results[0])  ;              
         }
     })
+
+});
+
+router.get( '/addUpdateUsers', async( req, res ) =>{
+  var {idusers, email, nombres, idroles, pass } = req.query;
+
+  var passwordHaash = await bcryptjs.hash(pass,8);
+
+  const query = 'CALL userUpdateOrInsert( ?, ?, ?, ?, ? );';
+
+  connection.query(query,[ idusers, nombres, email, idroles, passwordHaash ],async(error, results)=>{
+    if(error){
+      res.json({
+        result: error,
+        idusers: -1
+      });
+    }else{
+      const result = results[0];
+
+      var { iduser } = result[0];
+
+      contentHTML = `<h1>Alta / Modificacion de Usuario</h1>
+      <p>Te damos la bienvenida al <a href='${process.env.SERVER_APP}'>Sistema de tickets RodelSoft.</a></p>
+      <ul>
+        <li>Nombre: ${nombres}</li>
+          <li>Usuario: ${email}</li>
+          <li>Contraseña: ${pass}</li>
+      </ul>
+      <p>Recuerda que la cuenta es personal e intransferible y es responsabilidad del dueño el uso de este en la plataforma.</p>`;
+
+//      console.log(contentHTML);
+
+      let info = await transporter.sendMail({
+        from: "'RodelSoft Tickets' <" + process.env.EMAIL_AUTH_USER + ">",
+        to: email,
+        subject: 'Alta / Modificacion Usuarios',
+        html: contentHTML
+      }); 
+
+//      console.log(info.messageId);
+
+      res.json({
+        result: 'ok',
+        idUser: iduser
+      }); 
+
+    }
+  });
 
 });
 
