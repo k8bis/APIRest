@@ -3,14 +3,11 @@ const router = express.Router();
 const connection = require('../database/db');
 const bcryptjs = require('bcryptjs');
 const transporter = require('../email/index');
-
 var cors = require ('cors');
-const { parse } = require('dotenv');
 router.use(cors());
 
 const  generateRandomString = (num) => {
-  //const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const characters = '0123456789';
+  const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result1= ' ';
   const charactersLength = characters.length;
   for ( let i = 0; i < num; i++ ) {
