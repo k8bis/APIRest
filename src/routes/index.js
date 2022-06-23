@@ -40,11 +40,25 @@ router.get('/ticketsXUsuario/:id', (req, res) => {
 router.get( '/addUpdateUsers', async( req, res ) =>{
   var {idusers, email, nombres, idroles, pass } = req.query;
 
-  var passwordHaash = await bcryptjs.hash(pass,8);
+  let query = 'CALL getCatUsuarios( 0, ? );';
+  //si esta en 0 el id, es nuevo y no necesita validar la contraseña
+  if( ! idusers == 0){
+    connection.query( query,[email], async(error,result) => {
+      const infoUser = result[0];
+      if(error === null&&(infoUser[0].idusers > 0)){
+        if ( ! await bcryptjs.compare( pass, infoUser[0].pass ) ){
+          res.json({result:'no coincide la contraseña'});
+        }
+      }else{
+        res.json({result:'no hay usuario'});    
+      };
+    }); 
+  };
 
-  const query = 'CALL userUpdateOrInsert( ?, ?, ?, ?, ? );';
+  //existe el usuario y coincide su contraseña, actualizamos la informacion
+  query = 'CALL userUpdateOrInsert( ?, ?, null, null, null );';
 
-  connection.query(query,[ idusers, nombres, email, idroles, passwordHaash ],async(error, results)=>{
+  connection.query(query,[ idusers, nombres],async(error, results)=>{
     if(error){
       res.json({
         result: error,
@@ -64,17 +78,13 @@ router.get( '/addUpdateUsers', async( req, res ) =>{
       </ul>
       <p>Recuerda que la cuenta es personal e intransferible y es responsabilidad del dueño el uso de este en la plataforma.</p>`;
 
-//      console.log(contentHTML);
-
-      let info = await transporter.sendMail({
+/*      let info = await transporter.sendMail({
         from: "'RodelSoft Tickets' <" + process.env.EMAIL_AUTH_USER + ">",
         to: email,
         subject: 'Alta / Modificacion Usuarios',
         html: contentHTML
       }); 
-
-//      console.log(info.messageId);
-
+*/
       res.json({
         result: 'ok',
         idUser: iduser
@@ -192,7 +202,7 @@ router.get('/getCatUsuarios/:id&:email', (req, res) => {
 });
 
 router.get('/forgotPassword/:idusers', async(req,res) =>{
-  const query = 'CALL userUpdateOrInsert( ?, null,null,null,?);';
+  const query = 'CALL userUpdateOrInsert( ?, null, null, null,?);';
   const idusers = req.params.idusers;
   //const newPassword = generateRandomString(5);
   const newPassword = '1234';
@@ -221,6 +231,29 @@ router.get('/forgotPassword/:idusers', async(req,res) =>{
       console.log('Message sent: %s', info.messageId);
       res.json('[{estatus: enviado}]');
     };
+  });
+});
+
+router.get('/authentication/:user&:pass',async( req, res ) => {
+  const user = req.params.user;
+  const pass = req.params.pass;
+  //async traemos informacion del usuario capturado
+  const query = "CALL getCatUsuarios(0,?);";
+  //validamos si existe usuario
+  connection.query( query,[user], async(error,result) => {
+    const infoUser = result[0];
+    if(error === null&&(infoUser[0].idusers > 0)){
+      if ( await bcryptjs.compare( pass, infoUser[0].pass ) ){
+        res.json({iduser: infoUser[0].idusers,
+                  nombre: infoUser[0].nombres,
+                  idrol: infoUser[0].idroles,
+                  estatus: infoUser[0].estatus});
+      }else{
+        res.json({estatus: 'No coincide la contraseña.'});
+      };
+    }else{
+      res.json({estatus: 'No existe el usuario registrado.'});
+    }
   });
 });
 
