@@ -37,6 +37,19 @@ router.get('/ticketsXUsuario/:id', (req, res) => {
 
 });
 
+router.get('/getTicketXId/:idticket',(req,res) => {
+  var iduser = req.params.idticket;
+  const query = "CALL getTickets(?);";
+
+  connection.query(query,[iduser],(error,results)=>{
+    if(error){
+      console.log(error);
+    }else{
+      res.json(results);
+    }
+  })
+});
+
 router.get( '/addUpdateUsers', async( req, res ) =>{
   var {idusers, email, nombres, idroles, pass } = req.query;
 
@@ -99,7 +112,7 @@ router.get( '/addUpdateTickets', async( req, res ) => {
   var {idTicket,ticketDescripcion,idUserAlta,idUserAsignado,ticketCierre} = req.query;
   
   const query = "CALL ticketsUpdateOrInsert(?,?,?,?,?);";
-  //console.log(ticketDescripcion);
+
   connection.query(query,[idTicket,ticketDescripcion,idUserAlta,idUserAsignado,ticketCierre],async(error,results)=>{
     if(error){
       res.json({
@@ -109,13 +122,13 @@ router.get( '/addUpdateTickets', async( req, res ) => {
     }else{
       const result = results[0];
 
-      //console.log(result);
+      var {idticket, fechaAlta, Descripcion, Observaciones, usuarioAlta, emailAlta, usuarioCierre, emailCierre,estatus} = result[0];
 
-      var {idticket, fechaAlta, Descripcion, Observaciones, usuarioAlta, emailAlta, usuarioCierre, emailCierre} = result[0];
+      //console.log(result[0]);
 
       var emailTo = emailAlta; 
 
-      if (Observaciones === null){
+      if (estatus === 0){
         //enviar correo con los comentarios de Alta
         contentHTML = `
           <H1> Informacion de Ticket ${idticket}</H1>
@@ -131,7 +144,8 @@ router.get( '/addUpdateTickets', async( req, res ) => {
         subject = 'Alta TICKET ' + idticket;
 
         emailTo += ',' + emailCierre;
-      }else{
+      };
+      if (estatus === 1){
         //enviar correo con los comentarios de cierre
         contentHTML = `
           <H1> Informacion de Ticket ${idticket}</H1>
@@ -155,7 +169,7 @@ router.get( '/addUpdateTickets', async( req, res ) => {
         html: contentHTML
       });
 
-      console.log(info.messageId);
+      //console.log(info.messageId);
 
       res.json({
         result: 'ok',
